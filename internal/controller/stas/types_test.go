@@ -10,16 +10,16 @@ import (
 
 var _ = Describe("ImageReference", func() {
 	DescribeTable("Creating from pod",
-		func(pod *corev1.Pod, expectedImage podContainerImage) {
+		func(pod corev1.Pod, expectedImage podContainerImage) {
 			images, err := containerImages(pod)
 			Expect(err).To(Succeed())
 			Expect(images).To(HaveLen(1))
 			for _, image := range images {
-				Expect(*image).To(Equal(expectedImage))
+				Expect(image).To(Equal(expectedImage))
 			}
 		},
 		Entry("Standard FQ image",
-			&corev1.Pod{
+			corev1.Pod{
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
 						{
@@ -46,7 +46,7 @@ var _ = Describe("ImageReference", func() {
 				Tag: "f54a333e",
 			}),
 		Entry("Standard digested image",
-			&corev1.Pod{
+			corev1.Pod{
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
 						{
@@ -72,7 +72,7 @@ var _ = Describe("ImageReference", func() {
 				},
 			}),
 		Entry("Standard digested image in k3s",
-			&corev1.Pod{
+			corev1.Pod{
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
 						{
@@ -98,7 +98,7 @@ var _ = Describe("ImageReference", func() {
 				},
 			}),
 		Entry("Image imported into k3s",
-			&corev1.Pod{
+			corev1.Pod{
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
 						{
@@ -125,7 +125,7 @@ var _ = Describe("ImageReference", func() {
 				Tag: "latest",
 			}),
 		Entry("Untagged Docker Hub image on corporate OCP",
-			&corev1.Pod{
+			corev1.Pod{
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
 						{

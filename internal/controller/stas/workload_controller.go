@@ -99,8 +99,8 @@ func (r *PodReconciler) SetupWithManager(mgr ctrl.Manager) error {
 func (r *PodReconciler) reconcilePod() reconcile.Func {
 	return func(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 		fn := func(ctx context.Context) (ctrl.Result, error) {
-			pod := &corev1.Pod{}
-			if err := r.Get(ctx, req.NamespacedName, pod); err != nil {
+			pod := corev1.Pod{}
+			if err := r.Get(ctx, req.NamespacedName, &pod); err != nil {
 				return ctrl.Result{}, staserrors.Ignore(err, apierrors.IsNotFound)
 			}
 
@@ -118,10 +118,10 @@ func (r *PodReconciler) reconcilePod() reconcile.Func {
 	}
 }
 
-func (r *PodReconciler) reconcile(ctx context.Context, pod *corev1.Pod) error {
+func (r *PodReconciler) reconcile(ctx context.Context, pod corev1.Pod) error {
 	logf.FromContext(ctx).Info("Reconciling")
 
-	podController, err := r.getControllerWorkloadOrSelf(ctx, pod)
+	podController, err := r.getControllerWorkloadOrSelf(ctx, &pod)
 	if err != nil {
 		return err
 	}
@@ -157,7 +157,7 @@ func (r *PodReconciler) reconcile(ctx context.Context, pod *corev1.Pod) error {
 				cis.Spec.IgnoreUnfixed = ptr.To(false)
 			}
 
-			return controllerutil.SetOwnerReference(pod, cis, r.Scheme)
+			return controllerutil.SetOwnerReference(&pod, cis, r.Scheme)
 		}
 
 		_, err = controllerutil.CreateOrUpdate(ctx, r.Client, cis, mutateFn)
@@ -174,7 +174,7 @@ func (r *PodReconciler) reconcile(ctx context.Context, pod *corev1.Pod) error {
 	return nil
 }
 
-func (r *PodReconciler) garbageCollectObsoleteImageScans(ctx context.Context, pod *corev1.Pod, wantCIS *stasv1alpha1.ContainerImageScan) error {
+func (r *PodReconciler) garbageCollectObsoleteImageScans(ctx context.Context, pod corev1.Pod, wantCIS *stasv1alpha1.ContainerImageScan) error {
 	CISes, err := r.getImageScansOwnedByPodContainer(ctx, pod, wantCIS.Spec.Workload.ContainerName)
 	if err != nil {
 		return err
@@ -193,7 +193,7 @@ func (r *PodReconciler) garbageCollectObsoleteImageScans(ctx context.Context, po
 	return nil
 }
 
-func (r *PodReconciler) getImageScansOwnedByPodContainer(ctx context.Context, pod *corev1.Pod, containerName string) ([]stasv1alpha1.ContainerImageScan, error) {
+func (r *PodReconciler) getImageScansOwnedByPodContainer(ctx context.Context, pod corev1.Pod, containerName string) ([]stasv1alpha1.ContainerImageScan, error) {
 	listOps := []client.ListOption{
 		client.InNamespace(pod.Namespace),
 		client.MatchingFields{indexOwnerUID: string(pod.UID)},
